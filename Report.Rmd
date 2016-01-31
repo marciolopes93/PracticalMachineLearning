@@ -48,7 +48,7 @@ testing <- testing[, colSums(is.na(testing)) == 0]
 testing <- testing[, -c(1:6)] # remove first six
 ```
 
-The last part involves splitting the training set into a sub-training and validation set. This is necessary because we will need to get an estimate of the machine learning algorithm's accuracy, and estimating the accuracy of the training set (termed training error) is an unrealistic expectation of the actual error (termed test error). This is because we can lower the training error as low as we like simply by increasing model complexity, but this amounts to overfitting the data which would lead to bad predictions on new data.
+The last part involves splitting the training set into a sub-training and validation set. This is necessary because we will need to get an estimate of the machine learning algorithm's accuracy - and estimating the accuracy of the training set (termed training error) is an unrealistic expectation of the actual error (termed test error). This is because we can lower the training error as low as we like simply by increasing model complexity, but this amounts to overfitting the data which would lead to bad predictions on new data.
 
 ```{r message=FALSE, warning=FALSE, results="hide"}
 library(caret)
@@ -63,7 +63,7 @@ rm(inTrain, nzv, training)
 No transformations were deemed necessary since they are less important on non-linear models which we will consider below.`set.seed` ensures reproducibility.
 
 # Classification Tree
-_NOTE: I have used "The Elements of Statistical Learning" extensively and the `tree` function to build decision trees, as opposed to the `train` function in `caret`. I believe this provides greater control and understanding._
+_NOTE: I have used "The Elements of Statistical Learning" extensively and the `tree` function (and package) to build decision trees, as opposed to the `train` function in `caret`. I believe this provides greater control and understanding._
 
 Tree-based methods which recursively partition the data-space into smaller spaces are advantageous for their interpretation and allow for the use of simpler models in smaller data-spaces.
 
@@ -94,7 +94,7 @@ plot(treeDefault)
 text(treeDefault, cex=0.7, pretty=0)
 ```
 
-The resulting tree with default parameters is as above. However, we would like to grow the tree further and then prune back (with cost-complexity using cross-validation pruning as in Algorithm 8.1). To do this, we pass some arguments to `tree` to ensure the tree does not stop growing until there is very little change in deviance or there are too few observations in each node.
+The resulting tree with default parameters is as above. However, we would like to grow the tree further and then prune back (with cost-complexity pruning using cross-validation as in Algorithm 8.1). To do this, we pass some arguments to `tree` to ensure the tree does not stop growing until there is very little change in deviance or there are too few observations in each node.
 
 Step 1 is to grow a bigger ("full") tree so that we can later prune back with cross-validation.
 ```{r message=FALSE, warning=FALSE, results="hide"}
@@ -104,7 +104,7 @@ bigTree <- tree(classe ~ ., data=train, control=stopCriteria, split="deviance")
 summary(bigTree) # big tree with many (unnecessary) terminal nodes
 ```
 
-The resulting classification tree using default options.
+The resulting "full" classification tree is as below.
 ```{r}
 plot(bigTree)
 ```
@@ -122,9 +122,9 @@ axis(3, at=crossval$size, lab=round(crossval$k)) # add alpha values to the plot
 title("10-fold cross validation for classification tree", line=3.2)
 ```
 
-As can be seen from the plot above, there is minimal reduction in the cross validation (CV) error beyond 22 nodes. 16 nodes was in fact the default number of nodes.
+As can be seen from the plot above, there is minimal reduction in the cross-validation (CV) error beyond 22 nodes. 16 nodes was in fact the default number of nodes.
 
-Step 3 is to prune back the tree. I will choose to prune back at 22 nodes.
+Step 3 is to prune back the tree. I will choose to prune back at 22 nodes. Our final tree model is then displayed.
 ```{r}
 # (3) DO THE PRUNING:
 treePruned <- prune.tree(bigTree, best=22)
@@ -132,7 +132,7 @@ plot(treePruned); text(treePruned, cex=0.7, pretty=0)
 ```
 
 ### Prediction Accuracy of Classification Tree
-Now that we have a model, we need to find the prediction accuracy on unseen data (on the validation set). We note that `treePruned` has 0.7388 accuracy while `treeDefault` has 0.6472 accuracy.
+Now that we have a model, we need to find the prediction accuracy on unseen data (on the validation set). We note that `treePruned` has 0.7388 accuracy (shown below) while `treeDefault` has 0.6472 accuracy (not shown).
 ```{r}
 pred_tree <- predict(treePruned, valid, type="class")
 confusionTree <- confusionMatrix(valid$classe, pred_tree); confusionTree
@@ -140,9 +140,9 @@ confusionTree <- confusionMatrix(valid$classe, pred_tree); confusionTree
 0.7388 accuracy is not good enough to take the quiz, since we need 16/20 (80%) to pass. We need to try a better model. We move on to a random forest.
 
 # Random Forest
-_NOTE: I have used "The Elements of Statistical Learning" extensively and the `randomForest` function to build random forests, as opposed to the `train` function in `caret`. I believe this provides greater control and understanding._
+_NOTE: I have used "The Elements of Statistical Learning" extensively and the `randomForest` function (and package) to build random forests, as opposed to the `train` function in `caret`. I believe this provides greater control and understanding._
 
-Random forests, like bagging, use a number of decision trees on bootstrapped training samples. When building these trees for a random forest a _random sample_ of $m$ predictors is chosen as split candidates from the full set of $p$ predictors. The effect of this is to _decorrelate_ the trees. This builds on the notation that averaging predictors result in better predictions.
+Random forests, like bagging, use a number of decision trees on bootstrapped training samples. When building these trees for a random forest a _random sample_ of $m$ predictors is chosen as split candidates from the full set of $p$ predictors. The effect of this is to _decorrelate_ the trees. This builds on the notation that averaging predictors results in better predictions.
 
 In practice, this is done as follows. I have chosen to build 200 trees in my forest and left the number of variables to split on at each node to the default value. Later, we can check if 200 trees are necessary.
 
@@ -153,7 +153,7 @@ rf <- randomForest(classe ~ ., data=train, ntree=200, importance=TRUE, na.action
 rf # used default number of variables to consider at each split (mtry)
 ```
 
-With random forests, we gain prediction accuracy at the cost of interpretability. Here we do not have a single decision tree that we can plot. We can look at variable importance plots, however, should we wish to see which variables have a large influence on the response. We can also look at the cross-validation error as a function of the number of trees in our model. We note that 100 (even 50!) trees are sufficient in the model: we see little improvement in OOB error beyond this point.
+With random forests, we gain prediction accuracy at the expense of interpretability. Here we do not have a single decision tree that we can plot. We can look at variable importance plots, however, should we wish to see which variables have a large influence on the response (left in `project.R`). We can also look at the cross-validation error (OOB error) as a function of the number of trees in our model. We note that 100 (or even 50) trees are sufficient in the model: we see little improvement in OOB error beyond this point.
 
 ```{r}
 # choose number of trees:
@@ -161,7 +161,7 @@ head(rf$err.rate[, 1], 10)
 plot(rf$err.rate[, 1], type="l", xlab="Number of trees", ylab="OOB error") # 100 trees is enough
 ```
 
-I will, however, keep 200 trees since this ran relitively quickly and there is no need to go back and build a smaller forest.
+I will, however, keep 200 trees since this ran relatively quickly and there is no need to go back and build a smaller forest.
 
 ### Prediction Accuracy of Random Forest
 ```{r}
@@ -169,7 +169,7 @@ pred_rf <- predict(rf, valid)
 confusionForest <- confusionMatrix(valid$classe, pred_rf); confusionForest # 0.9978 accuracy
 ```
 
-We see that prediction accuracy is sufficient to ace the quiz! Let's take the quiz:
+With 0.9978 prediction accuracy on unseen data, we have sufficient prediction accuracy to ace the quiz! Let's take the quiz:
 
 ```{r}
 # use rf to predict on test set for quiz
@@ -177,4 +177,4 @@ pred_rf_quiz <- predict(rf, testing)
 pred_rf_quiz # B  A  B  A  A  E  D  B  A  A  B  C  B  A  E  E  A  B  B  B (100%)
 ```
 
-Indeed, we get 100% on the quiz using the random forest and there is no need to consider a time-consuming boosted model or stacking! :)
+Indeed, we get 100% on the quiz using the random forest and there is no need to consider a more time-consuming boosted model or stacking! :)
