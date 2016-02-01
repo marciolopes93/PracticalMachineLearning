@@ -11,4 +11,4 @@ This project uses data from devices such as Jawbone Up, Nike FuelBand, and Fitbi
 
 The `project.R` file contains all the code needed to build a classtification tree and a random forest to predict `classe` as well as import and preprocess the data. `Report.Rmd` is a walkthrough to (most) of the code in `project.R`. It details the steps and theory as well as provides explanations for the parameters used in the models. `Report.html` is `Report.Rmd` compiled into a friendlier html format.
 
-I recommend reading `Report.Rmd` in your browser since GitHub truncates `Report.html`. ("Sorry about that, but we can’t show files that are this big right now.")
+**I recommend downloading `Report.html` and opening in your browser since GitHub truncates `Report.html` on site. ("Sorry about that, but we can’t show files that are this big right now."). `Report.Rmd` does not display plots on GitHub.**
