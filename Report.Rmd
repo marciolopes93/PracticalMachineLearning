@@ -1,8 +1,8 @@
 ---
-title: "Practical Machine Learning: Course Project Report"
+title: 'Practical Machine Learning: Course Project Report'
 author: "Marcio Lopes"
 date: "31 January 2016"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
